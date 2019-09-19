@@ -2,81 +2,32 @@ import re
 import sys
 
 if __name__ == "__main__":
-    regex_word = re.compile(r"[a-zA-Z]+")
-    regex_punt = re.compile(r"[\-\,\.;\'\`\"\?!]")
-    regex_email = re.compile(r"[a-z0-9#$_\-]+(?:\.[a-z0-9#$_\-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",re.IGNORECASE)
-    regex_url = re.compile(r"(http://)?(https://)?(ftp://)?(www\.)?[^\s/$.?#]*\.[^\s]+")         
-    regex_currency = re.compile(r"[$₹€£¥\+\-]*[0-9,.]+[$₹€£¥]*")        
-    regex_name = re.compile(r"[A-Z][a-z]+")        
-    regex_hashtag = re.compile(r"#[a-zA-Z_0-9$\-]+")        
-    regex_mention = re.compile(r"@[a-zA-Z0-9$_\-]+") 
-    # all_regex = re.compile(regex_punt '|' regex_word '|' regex_email '|' regex_url '|' regex_currency '|' regex_name '|' regex_hashtag '|' regex_mention)
+    regex_word = r"[a-zA-Z]+"
+    regex_punt = r"[\-\,\.;\'\`\"\?!”“’]|(&amp;)|\/" # can check for ellipses using \u2026|(\.\.\.) but not sure if the test cases consider ellipses as separate punctuation 
+    regex_email = r"[a-zA_Z0-9#$_\-]+(?:\.[a-zA-Z0-9#$_\-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?"
+    regex_url = r"(http://)?(https://)?(ftp://)?(www\.)?[^\s/$\.?#]+\.[^\.\s]{1,}[^\s]+"       
+    regex_currency = r"[$₹€£¥\+\-]*[0-9,.]+[$₹€£¥]*"      
+    regex_name = r"[A-Z][a-z]+"       
+    regex_hashtag = r"#[a-zA-Z_0-9$\-]+"      
+    regex_mention = r"@[a-zA-Z0-9$_\-]+"
+    all_regex = re.compile("(%s|%s|%s|%s|%s|%s|%s|%s)" % (regex_punt, regex_hashtag, regex_mention, regex_url, regex_email, regex_currency, regex_name, regex_word))
     if len(sys.argv)<2:
         print("Error! Enter name of file to parse")
         print("Program will exit")
         sys.exit()
     file_name =  sys.argv[1]
     # print("Reading from file:",file_name)
-    word_list = []
-    punc_list = []
-    email_list = []
-    url_list = []
-    currency_list = []
-    name_list = []
-    hashtag_list = []
-    mention_list = []
-    # tok_list = []
+    tok_list = []
+    last_line = None
+    with open(file_name, 'r') as fll:
+        last_line = fll.readlines()[-1]
     with open(file_name, 'r') as fh:
         for line in fh:
-            # tok_list.append(all_regex.finditer(line))
             tokenised_list = []
-            # iter = re.finditer(regex_word,line)
-            # if iter:
-            #     word_list.append(iter)
-            # else:
-            #     iter = re.finditer(regex_punt,line)
-            #     if iter:
-            #         punc_list.append
-            # iter = re.finditer(regex_word,line)
-            # if iter:
-            #     word_list.append(iter)
-            #     continue
-            hashtag_list.append(re.finditer(regex_hashtag,line))
-            mention_list.append(re.finditer(regex_mention,line))
-            word_list.append(re.finditer(regex_word,line))
-            punc_list.append(re.finditer(regex_punt,line))
-            email_list.append(re.finditer(regex_email,line))
-            url_list.append(re.finditer(regex_url,line))
-            currency_list.append(re.finditer(regex_currency,line))
-            name_list.append(re.finditer(regex_name,line))
-
-            for iters in word_list:
+            tok_list.append(all_regex.finditer(line))
+            for iters in tok_list:
                 for match in iters:
                     tokenised_list.append(match.span())
-            for iters in name_list:
-                for match in iters:
-                    tokenised_list.append(match.span())
-            for iters in hashtag_list:
-                for match in iters:
-                    tokenised_list.append(match.span())
-            for iters in mention_list:
-                for match in iters:
-                   tokenised_list.append(match.span())
-            for iters in punc_list:
-                for match in iters:
-                    tokenised_list.append(match.span()) 
-            for iters in email_list:
-                for match in iters:
-                    tokenised_list.append(match.span())
-            for iters in url_list:
-                for match in iters:
-                    tokenised_list.append(match.span())
-            for iters in currency_list:
-                for match in iters:
-                    tokenised_list.append(match.span())
-            # for iters in tok_list:
-            #     for match in iters:
-            #         tokenised_list.append(match.span())
             tokenised_list = list(set(tokenised_list))
             tokenised_list.sort()
             indexes = []
@@ -88,17 +39,18 @@ if __name__ == "__main__":
                     indexes.append(end)
 
             indexes.sort()
-            print(line,end='')
+            # print(line,end='')
             # print(indexes)
             for i in range(0,len(indexes)-1,2):
                 # print(indexes[i],indexes[i+1])
-                if i+1==len(indexes):
-                    if line[indexes[i]]!='\n':
-                        print(line[indexes[i]],sep='',end=' ')
+                if i+1==len(indexes)-1:
+                    print(line[indexes[i]:indexes[i+1]],sep='',end='')
                 else:
                     print(line[indexes[i]:indexes[i+1]],sep='',end=' ')
-            print("")
-            print("")
-            
-
-    
+            # To print trailing whitespaces if required
+            # r = len(line)-2
+            # while(line[r]==' ' or line[r]=='\t'):
+            #     print(line[r],sep='',end='')
+            #     r -= 1
+            if line != last_line:
+                print("")
